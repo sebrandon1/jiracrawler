@@ -5,7 +5,7 @@
 all: build
 
 build:
-	go build -o bin/jiracrawler ./...
+	go build -o jiracrawler
 
 test:
 	go test -v ./...

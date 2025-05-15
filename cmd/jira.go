@@ -3,7 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -63,7 +63,7 @@ func fetchUserIssues(jiraURL, jiraEmail, apikey, user string) ([]map[string]inte
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("Jira API error: %s", string(body))
 	}
 
