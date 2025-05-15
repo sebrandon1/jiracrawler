@@ -19,3 +19,6 @@ lint:
 clean:
 	rm -rf bin/
 	rm -f *.out *.test
+
+vet:
+	go vet ./...

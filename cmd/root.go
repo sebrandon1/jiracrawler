@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -13,14 +10,11 @@ var rootCmd = &cobra.Command{
 	Short: "Jira issue crawler CLI",
 }
 
-func Execute() {
+func Execute() error {
 	cobra.OnInitialize(initConfig)
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(getCmd)
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	return rootCmd.Execute()
 }
 
 func initConfig() {
