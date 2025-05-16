@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var getCmd = &cobra.Command{
@@ -19,15 +18,20 @@ var assignedIssuesCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		output, _ := cmd.Flags().GetString("output")
-		apikey := viper.GetString("apikey")
-		jiraURL := viper.GetString("jira_url")
-		jiraEmail := viper.GetString("jira_email")
-		if apikey == "" || jiraURL == "" || jiraEmail == "" {
-			fmt.Println("Jira API key, URL, and email must be set. Use 'jiracrawler config set apikey <key>', 'jiracrawler config set jira_url <url>', and 'jiracrawler config set jira_email <email>' to set them.")
+		projectID, _ := cmd.Flags().GetString("projectID")
+		if projectID == "" {
+			projectID = "CNF"
+		}
+		apikey := GetConfigValue("apikey")
+		jiraURL := GetConfigValue("jira_url")
+		jiraUser := GetConfigValue("jira_user")
+
+		if apikey == "" || jiraURL == "" || jiraUser == "" {
+			fmt.Println("Jira API key, URL, and user must be set in the config.")
 			os.Exit(1)
 		}
 		users := args
-		issues := FetchAssignedIssues(apikey, users)
+		issues := FetchAssignedIssuesWithProject(users, projectID)
 		if output == "yaml" {
 			PrintYAML(issues)
 		} else {
@@ -39,5 +43,6 @@ var assignedIssuesCmd = &cobra.Command{
 func init() {
 	getCmd.AddCommand(assignedIssuesCmd)
 	assignedIssuesCmd.Flags().StringP("output", "o", "json", "Output format: json|yaml")
+	assignedIssuesCmd.PersistentFlags().StringP("projectID", "p", "CNF", "Jira project key (e.g., CNF)")
 	// Ensure getCmd and assignedIssuesCmd are initialized for root.go
 }

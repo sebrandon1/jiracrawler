@@ -7,6 +7,7 @@
 *.dll
 *.so
 *.dylib
+jiracrawler
 
 # Test binary, built with `go test -c`
 *.test
@@ -41,3 +42,5 @@ build/
 
 # env file
 .env
+.jiracrawler-config.yaml
+output.json

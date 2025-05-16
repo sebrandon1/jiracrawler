@@ -3,12 +3,8 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"strings"
 
-	"github.com/spf13/viper"
+	jira "github.com/andygrunwald/go-jira"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,64 +12,110 @@ import (
 // These should be set in the config as 'jira_url' and 'jira_email'
 type JiraConfig struct {
 	URL    string
-	Email  string
 	APIKey string
 }
 
 // FetchAssignedIssues fetches assigned issues for the given users from Jira
-func FetchAssignedIssues(apikey string, users []string) []map[string]interface{} {
-	jiraURL := viper.GetString("jira_url")
-	jiraEmail := viper.GetString("jira_email")
-	if jiraURL == "" || jiraEmail == "" {
-		fmt.Println("Jira URL and email must be set in config.")
+func FetchAssignedIssues(users []string) []map[string]interface{} {
+	jiraURL := GetConfigValue("jira_url")
+	jiraUser := GetConfigValue("jira_user")
+	apikey := GetConfigValue("apikey")
+	if jiraURL == "" {
+		jiraURL = "https://issues.redhat.com"
+	}
+	if jiraUser == "" {
+		fmt.Println("Jira username must be set in config as 'jira_user'.")
 		return nil
 	}
+
+	tokenAuth := jira.BearerAuthTransport{
+		Token: apikey,
+	}
+
+	client, err := jira.NewClient(tokenAuth.Client(), jiraURL)
+	if err != nil {
+		fmt.Printf("Error creating Jira client: %v\n", err)
+		return nil
+	}
+
 	var allIssues []map[string]interface{}
 	for _, user := range users {
-		issues, err := fetchUserIssues(jiraURL, jiraEmail, apikey, user)
+		// JQL: Only issues in the CNF project assigned to the user, not Closed, ordered by created date
+		jql := fmt.Sprintf("project=CNF AND assignee=\"%s\" ORDER BY created DESC", user)
+		issues, resp, err := client.Issue.Search(jql, nil)
 		if err != nil {
 			fmt.Printf("Error fetching issues for %s: %v\n", user, err)
 			continue
 		}
+		if resp != nil && resp.StatusCode != 200 {
+			fmt.Printf("Jira API error for %s: %s\n", user, resp.Status)
+			continue
+		}
+		var issuesList []map[string]interface{}
+		for _, issue := range issues {
+			issueMap := map[string]interface{}{
+				"key":    issue.Key,
+				"fields": issue.Fields,
+			}
+			issuesList = append(issuesList, issueMap)
+		}
 		allIssues = append(allIssues, map[string]interface{}{
 			"user":   user,
-			"issues": issues,
+			"issues": issuesList,
 		})
 	}
 	return allIssues
 }
 
-func fetchUserIssues(jiraURL, jiraEmail, apikey, user string) ([]map[string]interface{}, error) {
-	apiEndpoint := fmt.Sprintf("%s/rest/api/3/search", strings.TrimRight(jiraURL, "/"))
-	jql := url.QueryEscape(fmt.Sprintf("assignee=\"%s\" AND resolution=Unresolved ORDER BY updated DESC", user))
-	fullURL := fmt.Sprintf("%s?jql=%s", apiEndpoint, jql)
+// FetchAssignedIssuesWithProject fetches assigned issues for the given users and project from Jira
+func FetchAssignedIssuesWithProject(users []string, projectID string) []map[string]interface{} {
+	jiraURL := GetConfigValue("jira_url")
+	jiraUser := GetConfigValue("jira_user")
+	apikey := GetConfigValue("apikey")
+	if jiraURL == "" {
+		jiraURL = "https://issues.redhat.com"
+	}
+	if jiraUser == "" {
+		fmt.Println("Jira username must be set in config as 'jira_user'.")
+		return nil
+	}
 
-	req, err := http.NewRequest("GET", fullURL, nil)
+	tokenAuth := jira.BearerAuthTransport{
+		Token: apikey,
+	}
+
+	client, err := jira.NewClient(tokenAuth.Client(), jiraURL)
 	if err != nil {
-		return nil, err
-	}
-	req.SetBasicAuth(jiraEmail, apikey)
-	req.Header.Set("Accept", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("Jira API error: %s", string(body))
+		fmt.Printf("Error creating Jira client: %v\n", err)
+		return nil
 	}
 
-	var result struct {
-		Issues []map[string]interface{} `json:"issues"`
+	var allIssues []map[string]interface{}
+	for _, user := range users {
+		jql := fmt.Sprintf("project=%s AND assignee=\"%s\" ORDER BY created DESC", projectID, user)
+		issues, resp, err := client.Issue.Search(jql, nil)
+		if err != nil {
+			fmt.Printf("Error fetching issues for %s: %v\n", user, err)
+			continue
+		}
+		if resp != nil && resp.StatusCode != 200 {
+			fmt.Printf("Jira API error for %s: %s\n", user, resp.Status)
+			continue
+		}
+		var issuesList []map[string]interface{}
+		for _, issue := range issues {
+			issueMap := map[string]interface{}{
+				"key":    issue.Key,
+				"fields": issue.Fields,
+			}
+			issuesList = append(issuesList, issueMap)
+		}
+		allIssues = append(allIssues, map[string]interface{}{
+			"user":   user,
+			"issues": issuesList,
+		})
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
-	}
-	return result.Issues, nil
+	return allIssues
 }
 
 func PrintJSON(data interface{}) {

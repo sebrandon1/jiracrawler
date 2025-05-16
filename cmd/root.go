@@ -1,9 +1,14 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var configFile string
 
 var rootCmd = &cobra.Command{
 	Use:   "jiracrawler",
@@ -17,9 +22,27 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
+func init() {
+	cobra.OnInitialize(initConfig)
+}
+
 func initConfig() {
-	viper.SetConfigName("config")
+	configFile = ".jiracrawler-config.yaml"
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("$HOME/.jiracrawler")
-	_ = viper.ReadInConfig() // ignore error if config does not exist
+	viper.SetConfigFile(configFile)
+
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("JIRACRAWLER")
+
+	// If the config file is not found, create it
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		err = viper.WriteConfig()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Println("Error reading config file: ", err)
+	}
 }
