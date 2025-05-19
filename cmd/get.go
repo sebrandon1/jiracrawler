@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sebrandon1/jiracrawler/lib"
 	"github.com/spf13/cobra"
 )
 
@@ -31,11 +32,11 @@ var assignedIssuesCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		users := args
-		issues := FetchAssignedIssuesWithProject(users, projectID)
+		issues := lib.FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey, projectID, users)
 		if output == "yaml" {
-			PrintYAML(issues)
+			lib.PrintYAML(issues)
 		} else {
-			PrintJSON(issues)
+			lib.PrintJSON(issues)
 		}
 	},
 }
