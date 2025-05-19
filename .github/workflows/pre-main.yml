@@ -1,0 +1,37 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run make vet
+        run: |
+          if [ -f Makefile ] && grep -q '^vet:' Makefile; then
+            make vet
+          else
+            go vet ./...
+          fi
+
+      - name: Build
+        run: make build
+
+      - name: Run tests
+        run: |
+          if [ -f Makefile ] && grep -q '^test:' Makefile; then
+            make test
+          else
+            go test ./...
+          fi
