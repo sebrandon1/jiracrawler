@@ -33,7 +33,9 @@ var validateCmd = &cobra.Command{
 			fmt.Println("Error making request:", err)
 			return
 		}
-		defer resp.Body.Close()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 		if resp.StatusCode == 200 {
 			fmt.Println("Jira credentials are valid!")
 		} else {

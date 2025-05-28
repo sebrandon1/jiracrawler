@@ -1,4 +1,4 @@
-package cmd
+package lib
 
 import (
 	"testing"
@@ -7,15 +7,7 @@ import (
 )
 
 func TestFetchAssignedIssuesWithProject_EmptyConfig(t *testing.T) {
-	// Simulate missing config values
-	setConfigValue := func(key, value string) {
-		// This is a placeholder for setting config in tests
-	}
-	setConfigValue("jira_url", "")
-	setConfigValue("jira_user", "")
-	setConfigValue("apikey", "")
-
-	issues := FetchAssignedIssuesWithProject([]string{"testuser"}, "CNF")
+	issues := FetchAssignedIssuesWithProject("", "", "", "CNF", []string{"testuser"})
 	assert.Nil(t, issues)
 }
 
