@@ -3,6 +3,7 @@ package lib
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	jira "github.com/andygrunwald/go-jira"
 	"gopkg.in/yaml.v3"
@@ -55,6 +56,65 @@ func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID 
 		})
 	}
 	return allIssues
+}
+
+// FetchUserIssuesInDateRange fetches issues assigned to a user that were updated within a specific date range
+// startDate and endDate should be in YYYY-MM-DD format
+func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee string, startDate, endDate string) []map[string]interface{} {
+	if jiraURL == "" || jiraUser == "" || assignee == "" || startDate == "" || endDate == "" {
+		fmt.Println("jiraURL, jiraUser, assignee, startDate, and endDate must be provided")
+		return nil
+	}
+
+	// Validate date format
+	if _, err := time.Parse("2006-01-02", startDate); err != nil {
+		fmt.Printf("Invalid start date format. Use YYYY-MM-DD: %v\n", err)
+		return nil
+	}
+	if _, err := time.Parse("2006-01-02", endDate); err != nil {
+		fmt.Printf("Invalid end date format. Use YYYY-MM-DD: %v\n", err)
+		return nil
+	}
+
+	tokenAuth := jira.BearerAuthTransport{
+		Token: apikey,
+	}
+	client, err := jira.NewClient(tokenAuth.Client(), jiraURL)
+	if err != nil {
+		fmt.Printf("Error creating Jira client: %v\n", err)
+		return nil
+	}
+
+	// JQL query to find issues assigned to the user that were updated in the date range
+	jql := fmt.Sprintf("assignee=\"%s\" AND updated >= \"%s\" AND updated <= \"%s\" ORDER BY updated DESC", assignee, startDate, endDate)
+
+	issues, resp, err := client.Issue.Search(jql, nil)
+	if err != nil {
+		fmt.Printf("Error fetching issues for %s: %v\n", assignee, err)
+		return nil
+	}
+	if resp != nil && resp.StatusCode != 200 {
+		fmt.Printf("Jira API error for %s: %s\n", assignee, resp.Status)
+		return nil
+	}
+
+	var issuesList []map[string]interface{}
+	for _, issue := range issues {
+		issueMap := map[string]interface{}{
+			"key":    issue.Key,
+			"fields": issue.Fields,
+		}
+		issuesList = append(issuesList, issueMap)
+	}
+
+	return []map[string]interface{}{
+		{
+			"user":       assignee,
+			"dateRange":  fmt.Sprintf("%s to %s", startDate, endDate),
+			"totalCount": len(issuesList),
+			"issues":     issuesList,
+		},
+	}
 }
 
 func PrintJSON(data interface{}) {
