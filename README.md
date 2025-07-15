@@ -5,6 +5,7 @@ A CLI tool for querying, filtering, and reporting on Jira issues for Red Hat pro
 ## Features
 
 - **Fetch assigned issues**: Query Jira for issues assigned to one or more users, filtered by project and status (e.g., only active issues).
+- **User activity tracking**: Find all issues assigned to a user that were updated within a specific date range.
 - **Configurable project**: Use a flag to specify which Jira project to query (default: CNF).
 - **Flexible output**: Output results in JSON or YAML for easy integration with other tools or reporting.
 - **Credential validation**: Quickly check if your Jira API token and user are valid with a single command.
@@ -41,6 +42,21 @@ A CLI tool for querying, filtering, and reporting on Jira issues for Red Hat pro
 - `projectID`: Jira project key (default: CNF)
 - `output`: Output format (`json` or `yaml`)
 
+### Get User Updates in Date Range
+
+```bash
+./jiracrawler get userupdates <user@example.com> <start-date> <end-date> --output json
+```
+- `user@example.com`: The user whose assigned issues you want to query
+- `start-date`: Start date in YYYY-MM-DD format
+- `end-date`: End date in YYYY-MM-DD format
+- `output`: Output format (`json` or `yaml`)
+
+Example:
+```bash
+./jiracrawler get userupdates user@redhat.com 2024-01-01 2024-01-31 --output json
+```
+
 ### Example jq Usage
 
 To list active (not closed/completed) issues per user from the JSON output:
@@ -49,6 +65,25 @@ jq -r '
   .[] |
   "\(.user): " + ([.issues[] | select(.fields.status.name | test("(?i)closed|done|completed") | not) | .key] | join(", "))
 ' output.json
+```
+
+## Testing
+
+### Unit Tests
+```bash
+make test
+```
+
+### Integration Tests
+```bash
+make integration-test
+```
+
+Integration tests run against a real JIRA instance using your configured credentials. For full testing, set the `JIRACRAWLER_TEST_USER` environment variable:
+
+```bash
+export JIRACRAWLER_TEST_USER=your-email@example.com
+make integration-test
 ```
 
 ## Requirements
