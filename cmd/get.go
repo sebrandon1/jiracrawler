@@ -32,11 +32,11 @@ var assignedIssuesCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		users := args
-		issues := lib.FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey, projectID, users)
+		results := lib.FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey, projectID, users)
 		if output == "yaml" {
-			lib.PrintYAML(issues)
+			lib.PrintYAML(results)
 		} else {
-			lib.PrintJSON(issues)
+			lib.PrintJSON(results)
 		}
 	},
 }
@@ -63,21 +63,21 @@ Example:
 			os.Exit(1)
 		}
 
-		assignee := args[0]
+				assignee := args[0]
 		startDate := args[1]
 		endDate := args[2]
 
-		issues := lib.FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey, assignee, startDate, endDate)
-
-		if issues == nil {
+		result := lib.FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey, assignee, startDate, endDate)
+		
+		if result == nil {
 			fmt.Println("Failed to fetch issues. Please check your parameters and try again.")
 			os.Exit(1)
 		}
 
 		if output == "yaml" {
-			lib.PrintYAML(issues)
+			lib.PrintYAML(result)
 		} else {
-			lib.PrintJSON(issues)
+			lib.PrintJSON(result)
 		}
 	},
 }
