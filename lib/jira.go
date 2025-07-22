@@ -165,7 +165,8 @@ func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID 
 	}
 	var allResults []AssignedIssuesResult
 	for _, user := range users {
-		jql := fmt.Sprintf("project=%s AND assignee=\"%s\" ORDER BY created DESC", projectID, user)
+		// Include all issues regardless of status (including resolved/closed)
+		jql := fmt.Sprintf("project=%s AND assignee=\"%s\" AND (resolution is empty OR resolution is not empty) ORDER BY created DESC", projectID, user)
 		issues, resp, err := client.Issue.Search(jql, nil)
 		if err != nil {
 			fmt.Printf("Error fetching issues for %s: %v\n", user, err)
@@ -215,7 +216,8 @@ func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee strin
 	}
 
 	// JQL query to find issues assigned to the user that were updated in the date range
-	jql := fmt.Sprintf("assignee=\"%s\" AND updated >= \"%s\" AND updated <= \"%s\" ORDER BY updated DESC", assignee, startDate, endDate)
+	// Include all issues regardless of status (including resolved/closed)
+	jql := fmt.Sprintf("assignee=\"%s\" AND updated >= \"%s\" AND updated <= \"%s\" AND (resolution is empty OR resolution is not empty) ORDER BY updated DESC", assignee, startDate, endDate)
 
 	issues, resp, err := client.Issue.Search(jql, nil)
 	if err != nil {
