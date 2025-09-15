@@ -3,7 +3,7 @@ module github.com/sebrandon1/jiracrawler
 go 1.25.1
 
 require (
-	github.com/andygrunwald/go-jira v1.16.0
+	github.com/andygrunwald/go-jira v1.16.1
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
