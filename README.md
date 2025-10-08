@@ -1,5 +1,9 @@
 # jiracrawler
 
+[![PR Checks](https://github.com/sebrandon1/jiracrawler/actions/workflows/pre-main.yml/badge.svg)](https://github.com/sebrandon1/jiracrawler/actions/workflows/pre-main.yml)
+[![Nightly Integration Tests](https://github.com/sebrandon1/jiracrawler/actions/workflows/integration-nightly.yml/badge.svg)](https://github.com/sebrandon1/jiracrawler/actions/workflows/integration-nightly.yml)
+[![Release binaries](https://github.com/sebrandon1/jiracrawler/actions/workflows/release-binaries.yaml/badge.svg)](https://github.com/sebrandon1/jiracrawler/actions/workflows/release-binaries.yaml)
+
 A CLI tool for querying, filtering, and reporting on Jira issues for Red Hat projects (or any Jira instance). It is designed to help teams and individuals track their assigned issues, filter by project, and validate Jira API credentials using a personal access token (PAT).
 
 ## Features
