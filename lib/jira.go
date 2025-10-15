@@ -50,6 +50,54 @@ type Project struct {
 	Name string `json:"name" yaml:"name"`
 }
 
+// Comment represents a Jira issue comment
+type Comment struct {
+	ID      string    `json:"id" yaml:"id"`
+	Author  string    `json:"author" yaml:"author"`
+	Body    string    `json:"body" yaml:"body"`
+	Created time.Time `json:"created" yaml:"created"`
+	Updated time.Time `json:"updated" yaml:"updated"`
+}
+
+// HistoryItem represents a Jira issue history entry
+type HistoryItem struct {
+	ID      string          `json:"id" yaml:"id"`
+	Author  string          `json:"author" yaml:"author"`
+	Created time.Time       `json:"created" yaml:"created"`
+	Items   []HistoryChange `json:"items" yaml:"items"`
+}
+
+// HistoryChange represents a specific field change in history
+type HistoryChange struct {
+	Field      string `json:"field" yaml:"field"`
+	FieldType  string `json:"fieldType" yaml:"fieldType"`
+	FromString string `json:"fromString" yaml:"fromString"`
+	ToString   string `json:"toString" yaml:"toString"`
+}
+
+// TimeTracking represents time tracking information
+type TimeTracking struct {
+	OriginalEstimate  string `json:"originalEstimate,omitempty" yaml:"originalEstimate,omitempty"`
+	RemainingEstimate string `json:"remainingEstimate,omitempty" yaml:"remainingEstimate,omitempty"`
+	TimeSpent         string `json:"timeSpent,omitempty" yaml:"timeSpent,omitempty"`
+}
+
+// IssuePermissions represents what the authenticated user can access
+type IssuePermissions struct {
+	CanViewComments bool
+	CanViewHistory  bool
+	CanViewIssue    bool
+}
+
+// EnhancedFields represents additional field data for an issue
+type EnhancedFields struct {
+	Labels       []string
+	Components   []string
+	Priority     string
+	IssueType    string
+	TimeTracking *TimeTracking
+}
+
 // Issue represents a JIRA issue with key fields
 type Issue struct {
 	Key         string    `json:"key" yaml:"key"`
@@ -65,6 +113,13 @@ type Issue struct {
 	Created     string    `json:"created" yaml:"created"`
 	Updated     string    `json:"updated" yaml:"updated"`
 	Resolved    string    `json:"resolved" yaml:"resolved"`
+
+	// Enhanced context fields (populated on demand)
+	Comments     []Comment     `json:"comments,omitempty" yaml:"comments,omitempty"`
+	History      []HistoryItem `json:"history,omitempty" yaml:"history,omitempty"`
+	Labels       []string      `json:"labels,omitempty" yaml:"labels,omitempty"`
+	Components   []string      `json:"components,omitempty" yaml:"components,omitempty"`
+	TimeTracking *TimeTracking `json:"timeTracking,omitempty" yaml:"timeTracking,omitempty"`
 }
 
 // AssignedIssuesResult represents the result of fetching assigned issues
@@ -258,4 +313,50 @@ func PrintYAML(data interface{}) {
 		return
 	}
 	fmt.Println(string(b))
+}
+
+// FetchUserIssuesInDateRangeWithContext - Enhanced version of FetchUserIssuesInDateRange
+// Adds optional parameter to fetch enhanced context for all issues
+func FetchUserIssuesInDateRangeWithContext(
+	jiraURL, jiraUser, apikey, userEmail, startDate, endDate string,
+	enhancedContext bool,
+	verbose bool,
+) *UserUpdatesResult {
+	// First, get basic issues using existing function
+	result := FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey, userEmail, startDate, endDate)
+	if result == nil {
+		return nil
+	}
+
+	// If enhanced context not requested, return as-is
+	if !enhancedContext {
+		return result
+	}
+
+	// Create client for enhanced fetching
+	tokenAuth := jira.BearerAuthTransport{
+		Token: apikey,
+	}
+	client, err := jira.NewClient(tokenAuth.Client(), jiraURL)
+	if err != nil {
+		fmt.Printf("Warning: failed to create client for enhanced context: %v\n", err)
+		return result
+	}
+
+	// Enhance each issue with additional context
+	for i, issue := range result.Issues {
+		enhanced, err := FetchIssueWithEnhancedContext(client, jiraURL, issue.Key, apikey, verbose)
+		if err != nil {
+			fmt.Printf("Warning: failed to enhance issue %s: %v\n", issue.Key, err)
+			continue
+		}
+		result.Issues[i] = *enhanced
+
+		// Rate limiting: sleep between requests to avoid 429 errors
+		if i < len(result.Issues)-1 {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	return result
 }
