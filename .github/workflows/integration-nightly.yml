@@ -7,20 +7,7 @@ on:
   workflow_dispatch:
     # Allow manual triggering for testing
   pull_request:
-    # Run on pull requests to main (from same repo)
-    branches:
-      - main
-    paths:
-      - '**.go'
-      - 'go.mod'
-      - 'go.sum'
-      - 'Makefile'
-      - 'scripts/**'
-      - '.github/workflows/integration-nightly.yml'
-  pull_request_target:
-    # Run on PRs from forks (secrets are protected by security-check job)
-    # This allows fork contributors to see if their changes would pass integration tests
-    # Note: Integration tests will be skipped for forks (no secrets available)
+    # Run on pull requests to main
     branches:
       - main
     paths:
