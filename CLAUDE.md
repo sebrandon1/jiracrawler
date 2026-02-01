@@ -21,24 +21,43 @@ make build
 ### Run
 ```bash
 # Get issues assigned to a user
-./jiracrawler issues --user <email> --project CNF
+./jiracrawler get assignedissues <user> --projectID CNF
+
+# Get issues updated by user in date range
+./jiracrawler get userupdates <user> <start-date> <end-date>
+
+# View configuration
+./jiracrawler config view
 
 # Validate credentials
-./jiracrawler config validate
+./jiracrawler validate
 
 # Output as JSON/YAML
-./jiracrawler issues --format json
+./jiracrawler get assignedissues <user> -o json
 ```
 
 ### Test
 ```bash
-go test ./...
+make test              # Run unit tests
+make integration-test  # Run integration tests against real Jira
+```
+
+### Lint and Format
+```bash
+make lint
+make vet
+make fmt
+```
+
+### Clean
+```bash
+make clean
 ```
 
 ## Architecture
 
 - **`cmd/`** - CLI command implementations using Cobra
-- **`lib/`** - Jira API client library and utilities
+- **`lib/`** - Jira API client library with rate limiting
 - **`scripts/`** - Helper scripts
 - **`main.go`** - Application entry point
 
@@ -46,10 +65,12 @@ go test ./...
 
 Config file location: `.jiracrawler-config.yaml`
 ```yaml
-jira_url: "https://issues.redhat.com"
-jira_user: "your-email@example.com"
-jira_token: "your-api-token"
+url: "https://issues.redhat.com"
+username: "your-email@example.com"
+apikey: "your-api-token"
 ```
+
+Environment variables can also be used with prefix `JIRACRAWLER_` (e.g., `JIRACRAWLER_URL`, `JIRACRAWLER_APIKEY`).
 
 ## Features
 
@@ -61,7 +82,7 @@ jira_token: "your-api-token"
 
 ## Requirements
 
-- Go 1.21+
+- Go 1.25+
 - Jira personal access token (PAT)
 
 ## Code Style
