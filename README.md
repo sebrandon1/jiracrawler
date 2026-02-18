@@ -108,7 +108,7 @@ The repository includes a GitHub Actions workflow that runs integration tests ni
 The workflow automatically builds the binary, configures credentials, runs all integration tests, and cleans up sensitive data afterward.
 
 ## Requirements
-- Go 1.18+
+- Go 1.26+
 - Jira account with API token
 
 ## Why?
