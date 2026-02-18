@@ -68,7 +68,7 @@ func TestRateLimiterWait(t *testing.T) {
 func TestRateLimiterDoRequestSuccess(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("success"))
+		_, _ = w.Write([]byte("success"))
 	}))
 	defer server.Close()
 
@@ -96,7 +96,7 @@ func TestRateLimiterDoRequestRetry(t *testing.T) {
 		} else {
 			// Third request succeeds
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("success after retry"))
+			_, _ = w.Write([]byte("success after retry"))
 		}
 	}))
 	defer server.Close()
