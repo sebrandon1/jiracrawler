@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"text/tabwriter"
 	"time"
 
 	jira "github.com/andygrunwald/go-jira"
@@ -306,6 +307,45 @@ func PrintYAML(data interface{}) error {
 	}
 	fmt.Println(string(b))
 	return nil
+}
+
+// PrintTable prints issues in a human-readable table format using tabwriter.
+// Accepts either []AssignedIssuesResult or *UserUpdatesResult.
+func PrintTable(data interface{}) error {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "KEY\tSTATUS\tPRIORITY\tSUMMARY")
+
+	switch v := data.(type) {
+	case []AssignedIssuesResult:
+		for _, r := range v {
+			for _, issue := range r.Issues {
+				printIssueRow(w, issue)
+			}
+		}
+	case *UserUpdatesResult:
+		if v != nil {
+			for _, issue := range v.Issues {
+				printIssueRow(w, issue)
+			}
+		}
+	default:
+		return fmt.Errorf("unsupported data type for table output: %T", data)
+	}
+
+	return w.Flush()
+}
+
+func printIssueRow(w *tabwriter.Writer, issue Issue) {
+	summary := issue.Summary
+	if len(summary) > 60 {
+		summary = summary[:57] + "..."
+	}
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+		issue.Key,
+		issue.Status.Name,
+		issue.Priority.Name,
+		summary,
+	)
 }
 
 // FetchUserIssuesInDateRangeWithContext - Enhanced version of FetchUserIssuesInDateRange

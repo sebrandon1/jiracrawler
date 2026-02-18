@@ -21,6 +21,18 @@ func validateConfig() (apikey, jiraURL, jiraUser string) {
 	return
 }
 
+// printOutput formats and prints data in the specified output format.
+func printOutput(format string, data interface{}) error {
+	switch format {
+	case "yaml":
+		return lib.PrintYAML(data)
+	case "table":
+		return lib.PrintTable(data)
+	default:
+		return lib.PrintJSON(data)
+	}
+}
+
 var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get Jira data",
@@ -43,16 +55,9 @@ var assignedIssuesCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
-		if output == "yaml" {
-			if err := lib.PrintYAML(results); err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				os.Exit(1)
-			}
-		} else {
-			if err := lib.PrintJSON(results); err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				os.Exit(1)
-			}
+		if err := printOutput(output, results); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
 		}
 	},
 }
@@ -83,16 +88,9 @@ Example:
 			os.Exit(1)
 		}
 
-		if output == "yaml" {
-			if err := lib.PrintYAML(result); err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				os.Exit(1)
-			}
-		} else {
-			if err := lib.PrintJSON(result); err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				os.Exit(1)
-			}
+		if err := printOutput(output, result); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
 		}
 	},
 }
@@ -101,10 +99,10 @@ func init() {
 	getCmd.AddCommand(assignedIssuesCmd)
 	getCmd.AddCommand(userUpdatesCmd)
 
-	assignedIssuesCmd.Flags().StringP("output", "o", "json", "Output format: json|yaml")
+	assignedIssuesCmd.Flags().StringP("output", "o", "json", "Output format: json|yaml|table")
 	assignedIssuesCmd.PersistentFlags().StringP("projectID", "p", "CNF", "Jira project key (e.g., CNF)")
 
-	userUpdatesCmd.Flags().StringP("output", "o", "json", "Output format: json|yaml")
+	userUpdatesCmd.Flags().StringP("output", "o", "json", "Output format: json|yaml|table")
 
 	// Ensure getCmd and assignedIssuesCmd are initialized for root.go
 }

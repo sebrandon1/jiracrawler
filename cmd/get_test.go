@@ -3,6 +3,7 @@ package cmd
 import (
 	"testing"
 
+	"github.com/sebrandon1/jiracrawler/lib"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,6 +37,34 @@ func TestUserUpdatesCmdStructure(t *testing.T) {
 	assert.NotNil(t, outputFlag)
 	assert.Equal(t, "o", outputFlag.Shorthand)
 	assert.Equal(t, "json", outputFlag.DefValue)
+}
+
+func TestPrintOutput_JSON(t *testing.T) {
+	data := map[string]string{"key": "value"}
+	err := printOutput("json", data)
+	assert.NoError(t, err)
+}
+
+func TestPrintOutput_YAML(t *testing.T) {
+	data := map[string]string{"key": "value"}
+	err := printOutput("yaml", data)
+	assert.NoError(t, err)
+}
+
+func TestPrintOutput_Table(t *testing.T) {
+	data := &lib.UserUpdatesResult{
+		User:       "test",
+		TotalCount: 0,
+		Issues:     []lib.Issue{},
+	}
+	err := printOutput("table", data)
+	assert.NoError(t, err)
+}
+
+func TestPrintOutput_DefaultIsJSON(t *testing.T) {
+	data := map[string]string{"key": "value"}
+	err := printOutput("", data)
+	assert.NoError(t, err)
 }
 
 func TestGetCmdHasSubcommands(t *testing.T) {

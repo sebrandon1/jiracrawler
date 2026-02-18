@@ -89,6 +89,12 @@ func PrintYAML(data interface{}) error
 ```
 Prints the provided data as YAML to stdout. Returns an error if marshaling fails.
 
+### PrintTable
+```go
+func PrintTable(data interface{}) error
+```
+Prints issues in a human-readable table format with KEY, STATUS, PRIORITY, and SUMMARY columns. Accepts `[]AssignedIssuesResult` or `*UserUpdatesResult`. Long summaries are truncated to 60 characters.
+
 ---
 
 These functions are used by the CLI in `cmd/` but can also be imported and used in other Go programs for Jira automation and reporting.
