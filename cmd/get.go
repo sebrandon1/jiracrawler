@@ -8,6 +8,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// validateConfig checks that required Jira configuration values are set and returns them.
+func validateConfig() (apikey, jiraURL, jiraUser string) {
+	apikey = GetConfigValue("apikey")
+	jiraURL = GetConfigValue("jira_url")
+	jiraUser = GetConfigValue("jira_user")
+
+	if apikey == "" || jiraURL == "" || jiraUser == "" {
+		fmt.Println("Jira API key, URL, and user must be set in the config.")
+		os.Exit(1)
+	}
+	return
+}
+
 var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get Jira data",
@@ -23,14 +36,7 @@ var assignedIssuesCmd = &cobra.Command{
 		if projectID == "" {
 			projectID = "CNF"
 		}
-		apikey := GetConfigValue("apikey")
-		jiraURL := GetConfigValue("jira_url")
-		jiraUser := GetConfigValue("jira_user")
-
-		if apikey == "" || jiraURL == "" || jiraUser == "" {
-			fmt.Println("Jira API key, URL, and user must be set in the config.")
-			os.Exit(1)
-		}
+		apikey, jiraURL, jiraUser := validateConfig()
 		users := args
 		results := lib.FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey, projectID, users)
 		if output == "yaml" {
@@ -54,16 +60,10 @@ Example:
 	Run: func(cmd *cobra.Command, args []string) {
 		output, _ := cmd.Flags().GetString("output")
 
-		apikey := GetConfigValue("apikey")
-		jiraURL := GetConfigValue("jira_url")
-		jiraUser := GetConfigValue("jira_user")
+		apikey, jiraURL, jiraUser := validateConfig()
+		_ = jiraUser
 
-		if apikey == "" || jiraURL == "" || jiraUser == "" {
-			fmt.Println("Jira API key, URL, and user must be set in the config.")
-			os.Exit(1)
-		}
-
-				assignee := args[0]
+		assignee := args[0]
 		startDate := args[1]
 		endDate := args[2]
 
