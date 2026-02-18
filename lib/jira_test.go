@@ -55,3 +55,75 @@ func TestPrintYAML(t *testing.T) {
 	err := PrintYAML(data)
 	assert.NoError(t, err)
 }
+
+func TestPrintTable_AssignedIssuesResult(t *testing.T) {
+	data := []AssignedIssuesResult{
+		{
+			User: "testuser",
+			Issues: []Issue{
+				{
+					Key:      "CNF-1234",
+					Summary:  "Fix network policy",
+					Status:   Status{Name: "Open"},
+					Priority: Priority{Name: "Major"},
+				},
+				{
+					Key:      "CNF-1235",
+					Summary:  "Update SDK version",
+					Status:   Status{Name: "In Progress"},
+					Priority: Priority{Name: "Critical"},
+				},
+			},
+		},
+	}
+	err := PrintTable(data)
+	assert.NoError(t, err)
+}
+
+func TestPrintTable_UserUpdatesResult(t *testing.T) {
+	data := &UserUpdatesResult{
+		User:       "testuser",
+		DateRange:  "2024-01-01 to 2024-01-31",
+		TotalCount: 1,
+		Issues: []Issue{
+			{
+				Key:      "CNF-1234",
+				Summary:  "Fix network policy",
+				Status:   Status{Name: "Closed"},
+				Priority: Priority{Name: "Minor"},
+			},
+		},
+	}
+	err := PrintTable(data)
+	assert.NoError(t, err)
+}
+
+func TestPrintTable_NilUserUpdatesResult(t *testing.T) {
+	var data *UserUpdatesResult
+	err := PrintTable(data)
+	assert.NoError(t, err)
+}
+
+func TestPrintTable_UnsupportedType(t *testing.T) {
+	err := PrintTable("unsupported")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported data type")
+}
+
+func TestPrintTable_LongSummaryTruncation(t *testing.T) {
+	data := []AssignedIssuesResult{
+		{
+			User: "testuser",
+			Issues: []Issue{
+				{
+					Key:      "CNF-1234",
+					Summary:  "This is a very long summary that exceeds sixty characters and should be truncated",
+					Status:   Status{Name: "Open"},
+					Priority: Priority{Name: "Major"},
+				},
+			},
+		},
+	}
+	err := PrintTable(data)
+	assert.NoError(t, err)
+}
