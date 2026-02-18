@@ -77,6 +77,12 @@ type UserUpdatesResult struct {
 - `IssueType`: Issue type (id, name)
 - `Project`: JIRA project (id, key, name)
 
+### FetchIssuesWithJQL
+```go
+func FetchIssuesWithJQL(jiraURL, apikey, jql string, maxResults int) (*QueryResult, error)
+```
+Runs an arbitrary JQL query and returns matching issues. The `maxResults` parameter controls pagination.
+
 ### PrintJSON
 ```go
 func PrintJSON(data interface{}) error
@@ -93,7 +99,7 @@ Prints the provided data as YAML to stdout. Returns an error if marshaling fails
 ```go
 func PrintTable(data interface{}) error
 ```
-Prints issues in a human-readable table format with KEY, STATUS, PRIORITY, and SUMMARY columns. Accepts `[]AssignedIssuesResult` or `*UserUpdatesResult`. Long summaries are truncated to 60 characters.
+Prints issues in a human-readable table format with KEY, STATUS, PRIORITY, and SUMMARY columns. Accepts `[]AssignedIssuesResult`, `*UserUpdatesResult`, or `*QueryResult`. Long summaries are truncated to 60 characters.
 
 ---
 

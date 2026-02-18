@@ -246,6 +246,51 @@ func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID 
 	return allResults, nil
 }
 
+// QueryResult represents the result of a custom JQL query
+type QueryResult struct {
+	JQL        string  `json:"jql" yaml:"jql"`
+	TotalCount int     `json:"totalCount" yaml:"totalCount"`
+	Issues     []Issue `json:"issues" yaml:"issues"`
+}
+
+// FetchIssuesWithJQL runs an arbitrary JQL query and returns matching issues.
+func FetchIssuesWithJQL(jiraURL, apikey, jql string, maxResults int) (*QueryResult, error) {
+	if jiraURL == "" || apikey == "" {
+		return nil, fmt.Errorf("jiraURL and apikey must be provided")
+	}
+	if jql == "" {
+		return nil, fmt.Errorf("JQL query must not be empty")
+	}
+
+	client, err := NewJiraClient(jiraURL, apikey)
+	if err != nil {
+		return nil, fmt.Errorf("creating Jira client: %w", err)
+	}
+
+	opts := &jira.SearchOptions{
+		MaxResults: maxResults,
+	}
+
+	issues, resp, err := client.Issue.Search(jql, opts)
+	if err != nil {
+		return nil, fmt.Errorf("executing JQL query: %w", err)
+	}
+	if resp != nil && resp.StatusCode != 200 {
+		return nil, fmt.Errorf("jira API error: %s", resp.Status)
+	}
+
+	var convertedIssues []Issue
+	for _, issue := range issues {
+		convertedIssues = append(convertedIssues, convertJiraIssue(issue))
+	}
+
+	return &QueryResult{
+		JQL:        jql,
+		TotalCount: len(convertedIssues),
+		Issues:     convertedIssues,
+	}, nil
+}
+
 // FetchUserIssuesInDateRange fetches issues assigned to a user that were updated within a specific date range
 // startDate and endDate should be in YYYY-MM-DD format
 func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee string, startDate, endDate string) (*UserUpdatesResult, error) {
@@ -310,7 +355,7 @@ func PrintYAML(data interface{}) error {
 }
 
 // PrintTable prints issues in a human-readable table format using tabwriter.
-// Accepts either []AssignedIssuesResult or *UserUpdatesResult.
+// Accepts []AssignedIssuesResult, *UserUpdatesResult, or *QueryResult.
 func PrintTable(data interface{}) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "KEY\tSTATUS\tPRIORITY\tSUMMARY")
@@ -319,6 +364,12 @@ func PrintTable(data interface{}) error {
 	case []AssignedIssuesResult:
 		for _, r := range v {
 			for _, issue := range r.Issues {
+				printIssueRow(w, issue)
+			}
+		}
+	case *QueryResult:
+		if v != nil {
+			for _, issue := range v.Issues {
 				printIssueRow(w, issue)
 			}
 		}
