@@ -38,7 +38,8 @@ func initConfig() {
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		err = viper.WriteConfig()
 		if err != nil {
-			panic(err)
+			fmt.Fprintf(os.Stderr, "Error creating config file: %v\n", err)
+			os.Exit(1)
 		}
 	}
 
