@@ -34,7 +34,7 @@ func TestFetchIssueComments(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -59,7 +59,7 @@ func TestFetchIssueCommentsError(t *testing.T) {
 	// Create mock Jira server that returns error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Issue not found"))
+		_, _ = w.Write([]byte("Issue not found"))
 	}))
 	defer server.Close()
 
