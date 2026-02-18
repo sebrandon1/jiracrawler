@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -11,7 +12,8 @@ func SetConfigValue(key, value string) {
 	viper.Set(key, value)
 	err := viper.WriteConfig()
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Error writing config: %v\n", err)
+		os.Exit(1)
 	}
 }
 

@@ -108,7 +108,7 @@ func TestFetchIssueHistory(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -161,7 +161,7 @@ func TestFetchEnhancedFields(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -192,7 +192,7 @@ func TestCheckIssuePermissions(t *testing.T) {
 	t.Run("CanView", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"id":"123"}`))
+			_, _ = w.Write([]byte(`{"id":"123"}`))
 		}))
 		defer server.Close()
 
