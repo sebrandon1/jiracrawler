@@ -14,7 +14,7 @@ var validateCmd = &cobra.Command{
 		jiraURL := GetConfigValue("jira_url")
 		apikey := GetConfigValue("apikey")
 		if jiraURL == "" {
-			jiraURL = "https://issues.redhat.com"
+			jiraURL = DefaultJiraURL
 		}
 		if apikey == "" {
 			fmt.Println("Missing apikey in config.")

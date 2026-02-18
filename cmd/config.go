@@ -21,16 +21,8 @@ func GetConfigValue(key string) string {
 	return viper.GetString(key)
 }
 
-func UpdateConfigValue(key, value string) {
-	viper.Set(key, value)
-	err := viper.WriteConfig()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing config: %v\n", err)
-		os.Exit(1)
-	}
-}
-
-var defaultJiraURL = "https://issues.redhat.com"
+// DefaultJiraURL is the default Jira instance URL.
+const DefaultJiraURL = "https://issues.redhat.com"
 
 var configCmd = &cobra.Command{
 	Use:   "config",
@@ -46,23 +38,23 @@ var setCmd = &cobra.Command{
 		user, _ := cmd.Flags().GetString("user")
 
 		if user != "" {
-			UpdateConfigValue("jira_user", user)
+			SetConfigValue("jira_user", user)
 			fmt.Println("Set Jira user in config")
 		}
 
 		if token != "" {
-			UpdateConfigValue("apikey", token)
+			SetConfigValue("apikey", token)
 			fmt.Println("Set Jira API token in config")
 		}
 		if url == "" {
-			url = defaultJiraURL
+			url = DefaultJiraURL
 		}
 		if url != "" {
 
-			if url != defaultJiraURL {
+			if url != DefaultJiraURL {
 				fmt.Printf("Set Jira custom URL in config: %s", url)
 			}
-			UpdateConfigValue("jira_url", url)
+			SetConfigValue("jira_url", url)
 		}
 	},
 }

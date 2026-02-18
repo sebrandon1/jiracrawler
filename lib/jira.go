@@ -204,16 +204,21 @@ func convertJiraIssue(jiraIssue jira.Issue) Issue {
 	return issue
 }
 
+// NewJiraClient creates a new Jira client with bearer token authentication.
+func NewJiraClient(jiraURL, apikey string) (*jira.Client, error) {
+	tokenAuth := jira.BearerAuthTransport{
+		Token: apikey,
+	}
+	return jira.NewClient(tokenAuth.Client(), jiraURL)
+}
+
 // FetchAssignedIssuesWithProject fetches assigned issues for the given users and project from Jira
 func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID string, users []string) []AssignedIssuesResult {
 	if jiraURL == "" || jiraUser == "" || projectID == "" {
 		fmt.Println("jiraURL, jiraUser, and projectID must be provided (no defaults in lib)")
 		return nil
 	}
-	tokenAuth := jira.BearerAuthTransport{
-		Token: apikey,
-	}
-	client, err := jira.NewClient(tokenAuth.Client(), jiraURL)
+	client, err := NewJiraClient(jiraURL, apikey)
 	if err != nil {
 		fmt.Printf("Error creating Jira client: %v\n", err)
 		return nil
@@ -261,10 +266,7 @@ func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee strin
 		return nil
 	}
 
-	tokenAuth := jira.BearerAuthTransport{
-		Token: apikey,
-	}
-	client, err := jira.NewClient(tokenAuth.Client(), jiraURL)
+	client, err := NewJiraClient(jiraURL, apikey)
 	if err != nil {
 		fmt.Printf("Error creating Jira client: %v\n", err)
 		return nil
@@ -334,10 +336,7 @@ func FetchUserIssuesInDateRangeWithContext(
 	}
 
 	// Create client for enhanced fetching
-	tokenAuth := jira.BearerAuthTransport{
-		Token: apikey,
-	}
-	client, err := jira.NewClient(tokenAuth.Client(), jiraURL)
+	client, err := NewJiraClient(jiraURL, apikey)
 	if err != nil {
 		fmt.Printf("Warning: failed to create client for enhanced context: %v\n", err)
 		return result

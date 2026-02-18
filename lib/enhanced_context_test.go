@@ -34,7 +34,7 @@ func TestFetchIssueComments(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -59,7 +59,7 @@ func TestFetchIssueCommentsError(t *testing.T) {
 	// Create mock Jira server that returns error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Issue not found"))
+		_, _ = w.Write([]byte("Issue not found"))
 	}))
 	defer server.Close()
 
@@ -108,7 +108,7 @@ func TestFetchIssueHistory(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -161,7 +161,7 @@ func TestFetchEnhancedFields(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -192,7 +192,7 @@ func TestCheckIssuePermissions(t *testing.T) {
 	t.Run("CanView", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"id":"123"}`))
+			_, _ = w.Write([]byte(`{"id":"123"}`))
 		}))
 		defer server.Close()
 
@@ -239,20 +239,21 @@ func TestFetchIssueWithEnhancedContext(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 
 		// Handle different endpoints
-		if r.URL.Path == "/rest/api/2/issue/TEST-123" {
+		switch r.URL.Path {
+		case "/rest/api/2/issue/TEST-123":
 			if r.URL.RawQuery == "fields=id" {
 				// Permission check
-				json.NewEncoder(w).Encode(map[string]string{"id": "123"})
+				_ = json.NewEncoder(w).Encode(map[string]string{"id": "123"})
 			} else if r.URL.RawQuery == "expand=changelog" {
 				// History
-				json.NewEncoder(w).Encode(map[string]interface{}{
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{
 					"changelog": map[string]interface{}{
 						"histories": []interface{}{},
 					},
 				})
 			} else if r.URL.RawQuery != "" {
 				// Enhanced fields
-				json.NewEncoder(w).Encode(map[string]interface{}{
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{
 					"fields": map[string]interface{}{
 						"labels":     []string{"test"},
 						"components": []interface{}{},
@@ -265,7 +266,7 @@ func TestFetchIssueWithEnhancedContext(t *testing.T) {
 				})
 			} else {
 				// Basic issue fetch (for client.Issue.Get)
-				json.NewEncoder(w).Encode(map[string]interface{}{
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{
 					"key": "TEST-123",
 					"fields": map[string]interface{}{
 						"summary":     "Test Issue",
@@ -292,9 +293,9 @@ func TestFetchIssueWithEnhancedContext(t *testing.T) {
 					},
 				})
 			}
-		} else if r.URL.Path == "/rest/api/2/issue/TEST-123/comment" {
+		case "/rest/api/2/issue/TEST-123/comment":
 			// Comments
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"comments": []map[string]interface{}{
 					{
 						"id":   "1",
@@ -340,13 +341,13 @@ func TestFetchUserIssuesInDateRangeWithContext(t *testing.T) {
 	// This is a more complex integration test that would require mocking
 	// the entire Jira search API. For now, we test that it handles
 	// the enhancedContext flag correctly.
-	
+
 	t.Run("WithoutEnhancedContext", func(t *testing.T) {
 		// Create mock server
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/rest/api/2/search" {
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]interface{}{
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{
 					"issues": []interface{}{},
 					"total":  0,
 				})
@@ -455,4 +456,3 @@ func TestEnhancedFieldsStruct(t *testing.T) {
 	assert.NotNil(t, fields.TimeTracking)
 	assert.Equal(t, "8h", fields.TimeTracking.OriginalEstimate)
 }
-
