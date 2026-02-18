@@ -6,9 +6,9 @@ This package provides reusable functions for interacting with Jira and formattin
 
 ### FetchAssignedIssuesWithProject
 ```go
-func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID string, users []string) []AssignedIssuesResult
+func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID string, users []string) ([]AssignedIssuesResult, error)
 ```
-Fetches assigned issues for the given users in the specified Jira project. Returns a slice of typed results containing user and issue data.
+Fetches assigned issues for the given users in the specified Jira project. Returns a slice of typed results containing user and issue data, or an error.
 
 - `jiraURL`: The Jira instance URL (e.g., https://issues.redhat.com)
 - `jiraUser`: The Jira username (usually an email address)
@@ -18,9 +18,9 @@ Fetches assigned issues for the given users in the specified Jira project. Retur
 
 ### FetchUserIssuesInDateRange
 ```go
-func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee string, startDate, endDate string) *UserUpdatesResult
+func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee string, startDate, endDate string) (*UserUpdatesResult, error)
 ```
-Fetches issues assigned to a specific user that were updated within a given date range. Returns a typed result containing the user, date range, total count, and issues data.
+Fetches issues assigned to a specific user that were updated within a given date range. Returns a typed result containing the user, date range, total count, and issues data, or an error.
 
 - `jiraURL`: The Jira instance URL (e.g., https://issues.redhat.com)
 - `jiraUser`: The Jira username (usually an email address)
@@ -79,15 +79,15 @@ type UserUpdatesResult struct {
 
 ### PrintJSON
 ```go
-func PrintJSON(data interface{})
+func PrintJSON(data interface{}) error
 ```
-Prints the provided data as pretty-printed JSON to stdout.
+Prints the provided data as pretty-printed JSON to stdout. Returns an error if marshaling fails.
 
 ### PrintYAML
 ```go
-func PrintYAML(data interface{})
+func PrintYAML(data interface{}) error
 ```
-Prints the provided data as YAML to stdout.
+Prints the provided data as YAML to stdout. Returns an error if marshaling fails.
 
 ---
 

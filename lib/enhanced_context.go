@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	jira "github.com/andygrunwald/go-jira"
@@ -268,18 +269,18 @@ func FetchIssueWithEnhancedContext(client *jira.Client, baseURL, issueKey, apike
 	}
 
 	if verbose {
-		fmt.Printf("Fetching enhanced context for issue %s...\n", issueKey)
+		fmt.Fprintf(os.Stderr, "Fetching enhanced context for issue %s...\n", issueKey)
 	}
 
 	// Check permissions first
 	permissions, err := CheckIssuePermissions(client, baseURL, issueKey, apikey)
 	if err != nil {
 		if verbose {
-			fmt.Printf("Warning: failed to check permissions for %s: %v\n", issueKey, err)
+			fmt.Fprintf(os.Stderr, "Warning: failed to check permissions for %s: %v\n", issueKey, err)
 		}
 		// Continue anyway, we'll get errors on individual fetches if needed
 	} else if !permissions.CanViewIssue {
-		fmt.Printf("Warning: insufficient permissions to view issue %s - skipping enhanced context\n", issueKey)
+		fmt.Fprintf(os.Stderr, "Warning: insufficient permissions to view issue %s - skipping enhanced context\n", issueKey)
 		result := convertJiraIssue(*jiraIssue)
 		return &result, nil
 	}
@@ -291,39 +292,39 @@ func FetchIssueWithEnhancedContext(client *jira.Client, baseURL, issueKey, apike
 	if permissions.CanViewComments {
 		comments, err := FetchIssueComments(client, baseURL, issueKey, apikey)
 		if err != nil {
-			fmt.Printf("Warning: failed to fetch comments for %s: %v\n", issueKey, err)
+			fmt.Fprintf(os.Stderr, "Warning: failed to fetch comments for %s: %v\n", issueKey, err)
 		} else {
 			result.Comments = comments
 			if verbose {
-				fmt.Printf("  ✓ Fetched %d comments for %s\n", len(comments), issueKey)
+				fmt.Fprintf(os.Stderr, "  Fetched %d comments for %s\n", len(comments), issueKey)
 			}
 		}
 	} else if verbose {
-		fmt.Printf("  ⊘ Skipping comments for %s (insufficient permissions)\n", issueKey)
+		fmt.Fprintf(os.Stderr, "  Skipping comments for %s (insufficient permissions)\n", issueKey)
 	}
 
 	// Fetch history
 	if permissions.CanViewHistory {
 		history, err := FetchIssueHistory(client, baseURL, issueKey, apikey)
 		if err != nil {
-			fmt.Printf("Warning: failed to fetch history for %s: %v\n", issueKey, err)
+			fmt.Fprintf(os.Stderr, "Warning: failed to fetch history for %s: %v\n", issueKey, err)
 		} else {
 			result.History = history
 			if verbose {
-				fmt.Printf("  ✓ Fetched %d history entries for %s\n", len(history), issueKey)
+				fmt.Fprintf(os.Stderr, "  Fetched %d history entries for %s\n", len(history), issueKey)
 			}
 		}
 	} else if verbose {
-		fmt.Printf("  ⊘ Skipping history for %s (insufficient permissions)\n", issueKey)
+		fmt.Fprintf(os.Stderr, "  Skipping history for %s (insufficient permissions)\n", issueKey)
 	}
 
 	// Fetch additional fields
 	enhancedFields, err := FetchEnhancedFields(client, baseURL, issueKey, apikey)
 	if err != nil {
-		fmt.Printf("Warning: failed to fetch enhanced fields for %s: %v\n", issueKey, err)
+		fmt.Fprintf(os.Stderr, "Warning: failed to fetch enhanced fields for %s: %v\n", issueKey, err)
 	} else {
 		if verbose {
-			fmt.Printf("  ✓ Fetched enhanced fields for %s\n", issueKey)
+			fmt.Fprintf(os.Stderr, "  Fetched enhanced fields for %s\n", issueKey)
 		}
 		if enhancedFields.Labels != nil {
 			result.Labels = enhancedFields.Labels
