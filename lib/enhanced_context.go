@@ -199,8 +199,7 @@ func FetchEnhancedFields(client *jira.Client, baseURL, issueKey, apikey string) 
 		return nil, fmt.Errorf("failed to decode enhanced fields response: %w", err)
 	}
 
-	var labels []string
-	labels = response.Fields.Labels
+	labels := response.Fields.Labels
 
 	var components []string
 	for _, component := range response.Fields.Components {

@@ -17,6 +17,11 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
+
       - name: Run make vet
         run: |
           if [ -f Makefile ] && grep -q '^vet:' Makefile; then

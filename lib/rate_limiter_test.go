@@ -147,7 +147,7 @@ func TestRateLimiterRetryAfterHeader(t *testing.T) {
 			w.WriteHeader(http.StatusTooManyRequests)
 		} else {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("success"))
+			_, _ = w.Write([]byte("success"))
 		}
 	}))
 	defer server.Close()
