@@ -38,11 +38,21 @@ var assignedIssuesCmd = &cobra.Command{
 		}
 		apikey, jiraURL, jiraUser := validateConfig()
 		users := args
-		results := lib.FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey, projectID, users)
+		results, err := lib.FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey, projectID, users)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 		if output == "yaml" {
-			lib.PrintYAML(results)
+			if err := lib.PrintYAML(results); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
 		} else {
-			lib.PrintJSON(results)
+			if err := lib.PrintJSON(results); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
 		}
 	},
 }
@@ -67,17 +77,22 @@ Example:
 		startDate := args[1]
 		endDate := args[2]
 
-		result := lib.FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey, assignee, startDate, endDate)
-		
-		if result == nil {
-			fmt.Println("Failed to fetch issues. Please check your parameters and try again.")
+		result, err := lib.FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey, assignee, startDate, endDate)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
 
 		if output == "yaml" {
-			lib.PrintYAML(result)
+			if err := lib.PrintYAML(result); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
 		} else {
-			lib.PrintJSON(result)
+			if err := lib.PrintJSON(result); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
 		}
 	},
 }

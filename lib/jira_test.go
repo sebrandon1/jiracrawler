@@ -7,44 +7,51 @@ import (
 )
 
 func TestFetchAssignedIssuesWithProject_EmptyConfig(t *testing.T) {
-	results := FetchAssignedIssuesWithProject("", "", "", "CNF", []string{"testuser"})
+	results, err := FetchAssignedIssuesWithProject("", "", "", "CNF", []string{"testuser"})
+	assert.Error(t, err)
 	assert.Nil(t, results)
 }
 
 func TestFetchUserIssuesInDateRange_EmptyConfig(t *testing.T) {
-	result := FetchUserIssuesInDateRange("", "", "", "testuser", "2024-01-01", "2024-01-31")
+	result, err := FetchUserIssuesInDateRange("", "", "", "testuser", "2024-01-01", "2024-01-31")
+	assert.Error(t, err)
 	assert.Nil(t, result)
 }
 
 func TestFetchUserIssuesInDateRange_EmptyUser(t *testing.T) {
-	result := FetchUserIssuesInDateRange("https://example.com", "user", "token", "", "2024-01-01", "2024-01-31")
+	result, err := FetchUserIssuesInDateRange("https://example.com", "user", "token", "", "2024-01-01", "2024-01-31")
+	assert.Error(t, err)
 	assert.Nil(t, result)
 }
 
 func TestFetchUserIssuesInDateRange_EmptyDates(t *testing.T) {
-	result := FetchUserIssuesInDateRange("https://example.com", "user", "token", "testuser", "", "2024-01-31")
+	result, err := FetchUserIssuesInDateRange("https://example.com", "user", "token", "testuser", "", "2024-01-31")
+	assert.Error(t, err)
 	assert.Nil(t, result)
-	
-	result = FetchUserIssuesInDateRange("https://example.com", "user", "token", "testuser", "2024-01-01", "")
+
+	result, err = FetchUserIssuesInDateRange("https://example.com", "user", "token", "testuser", "2024-01-01", "")
+	assert.Error(t, err)
 	assert.Nil(t, result)
 }
 
 func TestFetchUserIssuesInDateRange_InvalidDateFormat(t *testing.T) {
-	result := FetchUserIssuesInDateRange("https://example.com", "user", "token", "testuser", "invalid-date", "2024-01-31")
+	result, err := FetchUserIssuesInDateRange("https://example.com", "user", "token", "testuser", "invalid-date", "2024-01-31")
+	assert.Error(t, err)
 	assert.Nil(t, result)
-	
-	result = FetchUserIssuesInDateRange("https://example.com", "user", "token", "testuser", "2024-01-01", "invalid-date")
+
+	result, err = FetchUserIssuesInDateRange("https://example.com", "user", "token", "testuser", "2024-01-01", "invalid-date")
+	assert.Error(t, err)
 	assert.Nil(t, result)
 }
 
 func TestPrintJSON(t *testing.T) {
 	data := map[string]interface{}{"foo": "bar"}
-	PrintJSON(data)
-	// No assertion, just ensure no panic
+	err := PrintJSON(data)
+	assert.NoError(t, err)
 }
 
 func TestPrintYAML(t *testing.T) {
 	data := map[string]interface{}{"foo": "bar"}
-	PrintYAML(data)
-	// No assertion, just ensure no panic
+	err := PrintYAML(data)
+	assert.NoError(t, err)
 }

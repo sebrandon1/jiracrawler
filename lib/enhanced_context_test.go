@@ -355,7 +355,7 @@ func TestFetchUserIssuesInDateRangeWithContext(t *testing.T) {
 		}))
 		defer server.Close()
 
-		result := FetchUserIssuesInDateRangeWithContext(
+		result, err := FetchUserIssuesInDateRangeWithContext(
 			server.URL,
 			"test@example.com",
 			"test-token",
@@ -365,6 +365,7 @@ func TestFetchUserIssuesInDateRangeWithContext(t *testing.T) {
 			false, // no enhanced context
 			false,
 		)
+		assert.NoError(t, err)
 		assert.NotNil(t, result)
 	})
 }

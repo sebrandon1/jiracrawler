@@ -3,6 +3,7 @@ package lib
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	jira "github.com/andygrunwald/go-jira"
@@ -213,15 +214,13 @@ func NewJiraClient(jiraURL, apikey string) (*jira.Client, error) {
 }
 
 // FetchAssignedIssuesWithProject fetches assigned issues for the given users and project from Jira
-func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID string, users []string) []AssignedIssuesResult {
+func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID string, users []string) ([]AssignedIssuesResult, error) {
 	if jiraURL == "" || jiraUser == "" || projectID == "" {
-		fmt.Println("jiraURL, jiraUser, and projectID must be provided (no defaults in lib)")
-		return nil
+		return nil, fmt.Errorf("jiraURL, jiraUser, and projectID must be provided")
 	}
 	client, err := NewJiraClient(jiraURL, apikey)
 	if err != nil {
-		fmt.Printf("Error creating Jira client: %v\n", err)
-		return nil
+		return nil, fmt.Errorf("creating Jira client: %w", err)
 	}
 	var allResults []AssignedIssuesResult
 	for _, user := range users {
@@ -229,12 +228,10 @@ func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID 
 		jql := fmt.Sprintf("project=%s AND assignee=\"%s\" AND (resolution is empty OR resolution is not empty) ORDER BY created DESC", projectID, user)
 		issues, resp, err := client.Issue.Search(jql, nil)
 		if err != nil {
-			fmt.Printf("Error fetching issues for %s: %v\n", user, err)
-			continue
+			return nil, fmt.Errorf("fetching issues for %s: %w", user, err)
 		}
 		if resp != nil && resp.StatusCode != 200 {
-			fmt.Printf("Jira API error for %s: %s\n", user, resp.Status)
-			continue
+			return nil, fmt.Errorf("jira API error for %s: %s", user, resp.Status)
 		}
 		var convertedIssues []Issue
 		for _, issue := range issues {
@@ -245,31 +242,27 @@ func FetchAssignedIssuesWithProject(jiraURL, jiraUser, apikey string, projectID 
 			Issues: convertedIssues,
 		})
 	}
-	return allResults
+	return allResults, nil
 }
 
 // FetchUserIssuesInDateRange fetches issues assigned to a user that were updated within a specific date range
 // startDate and endDate should be in YYYY-MM-DD format
-func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee string, startDate, endDate string) *UserUpdatesResult {
+func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee string, startDate, endDate string) (*UserUpdatesResult, error) {
 	if jiraURL == "" || jiraUser == "" || assignee == "" || startDate == "" || endDate == "" {
-		fmt.Println("jiraURL, jiraUser, assignee, startDate, and endDate must be provided")
-		return nil
+		return nil, fmt.Errorf("jiraURL, jiraUser, assignee, startDate, and endDate must be provided")
 	}
 
 	// Validate date format
 	if _, err := time.Parse("2006-01-02", startDate); err != nil {
-		fmt.Printf("Invalid start date format. Use YYYY-MM-DD: %v\n", err)
-		return nil
+		return nil, fmt.Errorf("invalid start date format (use YYYY-MM-DD): %w", err)
 	}
 	if _, err := time.Parse("2006-01-02", endDate); err != nil {
-		fmt.Printf("Invalid end date format. Use YYYY-MM-DD: %v\n", err)
-		return nil
+		return nil, fmt.Errorf("invalid end date format (use YYYY-MM-DD): %w", err)
 	}
 
 	client, err := NewJiraClient(jiraURL, apikey)
 	if err != nil {
-		fmt.Printf("Error creating Jira client: %v\n", err)
-		return nil
+		return nil, fmt.Errorf("creating Jira client: %w", err)
 	}
 
 	// JQL query to find issues assigned to the user that were updated in the date range
@@ -278,12 +271,10 @@ func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee strin
 
 	issues, resp, err := client.Issue.Search(jql, nil)
 	if err != nil {
-		fmt.Printf("Error fetching issues for %s: %v\n", assignee, err)
-		return nil
+		return nil, fmt.Errorf("fetching issues for %s: %w", assignee, err)
 	}
 	if resp != nil && resp.StatusCode != 200 {
-		fmt.Printf("Jira API error for %s: %s\n", assignee, resp.Status)
-		return nil
+		return nil, fmt.Errorf("jira API error for %s: %s", assignee, resp.Status)
 	}
 
 	var convertedIssues []Issue
@@ -296,25 +287,25 @@ func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee strin
 		DateRange:  fmt.Sprintf("%s to %s", startDate, endDate),
 		TotalCount: len(convertedIssues),
 		Issues:     convertedIssues,
-	}
+	}, nil
 }
 
-func PrintJSON(data interface{}) {
+func PrintJSON(data interface{}) error {
 	b, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		fmt.Println("Error marshaling JSON:", err)
-		return
+		return fmt.Errorf("marshaling JSON: %w", err)
 	}
 	fmt.Println(string(b))
+	return nil
 }
 
-func PrintYAML(data interface{}) {
+func PrintYAML(data interface{}) error {
 	b, err := yaml.Marshal(data)
 	if err != nil {
-		fmt.Println("Error marshaling YAML:", err)
-		return
+		return fmt.Errorf("marshaling YAML: %w", err)
 	}
 	fmt.Println(string(b))
+	return nil
 }
 
 // FetchUserIssuesInDateRangeWithContext - Enhanced version of FetchUserIssuesInDateRange
@@ -323,30 +314,31 @@ func FetchUserIssuesInDateRangeWithContext(
 	jiraURL, jiraUser, apikey, userEmail, startDate, endDate string,
 	enhancedContext bool,
 	verbose bool,
-) *UserUpdatesResult {
+) (*UserUpdatesResult, error) {
 	// First, get basic issues using existing function
-	result := FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey, userEmail, startDate, endDate)
-	if result == nil {
-		return nil
+	result, err := FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey, userEmail, startDate, endDate)
+	if err != nil {
+		return nil, err
 	}
 
 	// If enhanced context not requested, return as-is
 	if !enhancedContext {
-		return result
+		return result, nil
 	}
 
 	// Create client for enhanced fetching
 	client, err := NewJiraClient(jiraURL, apikey)
 	if err != nil {
-		fmt.Printf("Warning: failed to create client for enhanced context: %v\n", err)
-		return result
+		return nil, fmt.Errorf("creating client for enhanced context: %w", err)
 	}
 
 	// Enhance each issue with additional context
 	for i, issue := range result.Issues {
 		enhanced, err := FetchIssueWithEnhancedContext(client, jiraURL, issue.Key, apikey, verbose)
 		if err != nil {
-			fmt.Printf("Warning: failed to enhance issue %s: %v\n", issue.Key, err)
+			if verbose {
+				fmt.Fprintf(os.Stderr, "Warning: failed to enhance issue %s: %v\n", issue.Key, err)
+			}
 			continue
 		}
 		result.Issues[i] = *enhanced
@@ -357,5 +349,5 @@ func FetchUserIssuesInDateRangeWithContext(
 		}
 	}
 
-	return result
+	return result, nil
 }
