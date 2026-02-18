@@ -3,7 +3,7 @@
 APP_NAME = jiracrawler
 GO_FILES := $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
-.PHONY: all build test integration-test lint clean vet fmt run help
+.PHONY: all build test integration-test lint clean vet fmt run coverage help
 
 all: build
 
@@ -23,6 +23,10 @@ lint:
 	fi
 	golangci-lint run ./...
 
+coverage:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+
 clean:
 	rm -rf bin/
 	rm -f *.out *.test $(APP_NAME)
@@ -40,6 +44,7 @@ help:
 	@echo "Common make targets:"
 	@echo "  build            - Build the binary ($(APP_NAME))"
 	@echo "  test             - Run all unit tests"
+	@echo "  coverage         - Generate test coverage report"
 	@echo "  integration-test - Run integration tests against real JIRA"
 	@echo "  lint             - Run golangci-lint on the codebase"
 	@echo "  vet              - Run go vet on the codebase"
