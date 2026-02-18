@@ -56,6 +56,37 @@ func TestPrintYAML(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestFetchIssuesWithJQL_EmptyURL(t *testing.T) {
+	result, err := FetchIssuesWithJQL("", "token", "project = CNF", 50)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "jiraURL and apikey must be provided")
+}
+
+func TestFetchIssuesWithJQL_EmptyJQL(t *testing.T) {
+	result, err := FetchIssuesWithJQL("https://example.com", "token", "", 50)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "JQL query must not be empty")
+}
+
+func TestPrintTable_QueryResult(t *testing.T) {
+	data := &QueryResult{
+		JQL:        "project = CNF",
+		TotalCount: 1,
+		Issues: []Issue{
+			{
+				Key:      "CNF-1234",
+				Summary:  "Test issue",
+				Status:   Status{Name: "Open"},
+				Priority: Priority{Name: "Major"},
+			},
+		},
+	}
+	err := PrintTable(data)
+	assert.NoError(t, err)
+}
+
 func TestPrintTable_AssignedIssuesResult(t *testing.T) {
 	data := []AssignedIssuesResult{
 		{
