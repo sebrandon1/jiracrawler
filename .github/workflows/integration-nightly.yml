@@ -22,6 +22,8 @@ env:
   # Prevent secrets from being exposed to forks
   UPSTREAM_REPO: sebrandon1/jiracrawler
 
+permissions: read-all
+
 jobs:
   security-check:
     runs-on: ubuntu-latest
