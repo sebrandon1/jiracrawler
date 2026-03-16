@@ -15,6 +15,41 @@ CONFIG_FILE=".jiracrawler-config.yaml"
 TEST_USER="${JIRACRAWLER_TEST_USER:-}"
 TEST_PROJECT="${JIRACRAWLER_TEST_PROJECT:-CNF}"
 
+# Retry configuration
+MAX_RETRIES=3
+INITIAL_BACKOFF=2
+
+# Retry function with exponential backoff for transient failures
+# Usage: retry_command <description> <command> [args...]
+retry_command() {
+    local description="$1"
+    shift
+    local attempt=1
+    local backoff=$INITIAL_BACKOFF
+
+    while [ $attempt -le $MAX_RETRIES ]; do
+        if [ $attempt -gt 1 ]; then
+            echo -e "${YELLOW}   Retry attempt $attempt/$MAX_RETRIES after ${backoff}s delay...${NC}"
+            sleep $backoff
+        fi
+
+        if "$@"; then
+            return 0
+        fi
+
+        local exit_code=$?
+
+        if [ $attempt -lt $MAX_RETRIES ]; then
+            echo -e "${YELLOW}⚠️  $description failed (attempt $attempt/$MAX_RETRIES)${NC}"
+            attempt=$((attempt + 1))
+            backoff=$((backoff * 2))
+        else
+            echo -e "${RED}❌ $description failed after $MAX_RETRIES attempts${NC}"
+            return $exit_code
+        fi
+    done
+}
+
 echo -e "${BLUE}============================================${NC}"
 echo -e "${BLUE}  JiraCrawler Integration Tests${NC}"
 echo -e "${BLUE}============================================${NC}"
@@ -41,7 +76,7 @@ echo -e "${GREEN}✅ Config file found: $CONFIG_FILE${NC}"
 # Test 1: Validate credentials
 echo ""
 echo -e "${BLUE}🔍 Test 1: Validating JIRA credentials...${NC}"
-if $BINARY validate; then
+if retry_command "Credentials validation" $BINARY validate; then
     echo -e "${GREEN}✅ Credentials validation passed${NC}"
 else
     echo -e "${RED}❌ Credentials validation failed${NC}"
@@ -57,11 +92,15 @@ if [ -z "$TEST_USER" ]; then
     echo -e "${YELLOW}📋 To enable this test, set: export JIRACRAWLER_TEST_USER=your-email@example.com${NC}"
 else
     echo -e "${BLUE}   Testing with user: $TEST_USER, project: $TEST_PROJECT${NC}"
-    
+
     # Test JSON output
-    if $BINARY get assignedissues "$TEST_USER" --projectID "$TEST_PROJECT" --output json > /tmp/jiracrawler_test_output.json; then
+    json_command() {
+        $BINARY get assignedissues "$TEST_USER" --projectID "$TEST_PROJECT" --output json > /tmp/jiracrawler_test_output.json
+    }
+
+    if retry_command "Assigned issues JSON retrieval" json_command; then
         echo -e "${GREEN}✅ Assigned issues JSON retrieval successful${NC}"
-        
+
         # Basic validation of JSON output
         if command -v jq >/dev/null 2>&1; then
             if jq empty /tmp/jiracrawler_test_output.json 2>/dev/null; then
@@ -76,9 +115,13 @@ else
         echo -e "${RED}❌ Assigned issues retrieval failed${NC}"
         exit 1
     fi
-    
+
     # Test YAML output
-    if $BINARY get assignedissues "$TEST_USER" --projectID "$TEST_PROJECT" --output yaml > /tmp/jiracrawler_test_output.yaml; then
+    yaml_command() {
+        $BINARY get assignedissues "$TEST_USER" --projectID "$TEST_PROJECT" --output yaml > /tmp/jiracrawler_test_output.yaml
+    }
+
+    if retry_command "Assigned issues YAML retrieval" yaml_command; then
         echo -e "${GREEN}✅ Assigned issues YAML retrieval successful${NC}"
     else
         echo -e "${RED}❌ Assigned issues YAML retrieval failed${NC}"
@@ -97,16 +140,20 @@ else
     END_DATE=$(date +"%Y-%m-%d")
     
     echo -e "${BLUE}   Testing with user: $TEST_USER, date range: $START_DATE to $END_DATE${NC}"
-    
+
     # Test JSON output
-    if $BINARY get userupdates "$TEST_USER" "$START_DATE" "$END_DATE" --output json > /tmp/jiracrawler_userupdates_test.json; then
+    userupdates_json_command() {
+        $BINARY get userupdates "$TEST_USER" "$START_DATE" "$END_DATE" --output json > /tmp/jiracrawler_userupdates_test.json
+    }
+
+    if retry_command "User updates JSON retrieval" userupdates_json_command; then
         echo -e "${GREEN}✅ User updates JSON retrieval successful${NC}"
-        
+
         # Basic validation of JSON output
         if command -v jq >/dev/null 2>&1; then
             if jq empty /tmp/jiracrawler_userupdates_test.json 2>/dev/null; then
                 echo -e "${GREEN}✅ JSON output is valid${NC}"
-                
+
                 # Show summary
                 TOTAL_COUNT=$(jq -r '.[0].totalCount // 0' /tmp/jiracrawler_userupdates_test.json 2>/dev/null || echo "0")
                 echo -e "${BLUE}   Found $TOTAL_COUNT issues updated in the date range${NC}"
@@ -120,9 +167,13 @@ else
         echo -e "${RED}❌ User updates retrieval failed${NC}"
         exit 1
     fi
-    
+
     # Test YAML output
-    if $BINARY get userupdates "$TEST_USER" "$START_DATE" "$END_DATE" --output yaml > /tmp/jiracrawler_userupdates_test.yaml; then
+    userupdates_yaml_command() {
+        $BINARY get userupdates "$TEST_USER" "$START_DATE" "$END_DATE" --output yaml > /tmp/jiracrawler_userupdates_test.yaml
+    }
+
+    if retry_command "User updates YAML retrieval" userupdates_yaml_command; then
         echo -e "${GREEN}✅ User updates YAML retrieval successful${NC}"
     else
         echo -e "${RED}❌ User updates YAML retrieval failed${NC}"
