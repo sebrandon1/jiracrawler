@@ -26,6 +26,9 @@ make build
 # Get issues updated by user in date range
 ./jiracrawler get userupdates <user> <start-date> <end-date>
 
+# Run a custom JQL query
+./jiracrawler get query "project = CNF AND status = Open" --max-results 10 -o table
+
 # View configuration
 ./jiracrawler config view
 
@@ -34,11 +37,15 @@ make build
 
 # Output as JSON/YAML
 ./jiracrawler get assignedissues <user> -o json
+
+# Generate shell completion scripts (bash/zsh/fish/powershell)
+./jiracrawler completion bash
 ```
 
 ### Test
 ```bash
 make test              # Run unit tests
+make coverage          # Run tests with coverage report
 make integration-test  # Run integration tests against real Jira
 ```
 
@@ -49,15 +56,26 @@ make vet
 make fmt
 ```
 
-### Clean
+### Other
 ```bash
-make clean
+make clean             # Remove build/test artifacts
+make run               # Build and run the app
+make help              # Show all available make targets
 ```
 
 ## Architecture
 
 - **`cmd/`** - CLI command implementations using Cobra
-- **`lib/`** - Jira API client library with rate limiting
+  - `root.go` - Root command and global flags
+  - `config.go` - Config set/view subcommands
+  - `get.go` - Parent get command with `assignedissues` and `userupdates` subcommands
+  - `query.go` - `get query` subcommand for arbitrary JQL queries
+  - `validate.go` - Credential validation command
+  - `completion.go` - Shell completion script generation (bash/zsh/fish/powershell)
+- **`lib/`** - Jira API client library
+  - `jira.go` - Core Jira client, issue types, and API interaction
+  - `enhanced_context.go` - Enhanced issue context fetching (comments, change history, additional fields, permissions checks)
+  - `rate_limiter.go` - Thread-safe rate limiter with exponential backoff, Retry-After header support, and 429 retry logic
 - **`scripts/`** - Helper scripts
 - **`main.go`** - Application entry point
 
@@ -77,8 +95,12 @@ Environment variables can also be used with prefix `JIRACRAWLER_` (e.g., `JIRACR
 - Fetch issues assigned to users
 - Filter by project and status
 - User activity tracking by date range
-- JSON/YAML output formats
+- Custom JQL query support (`get query` command with `--max-results` flag)
+- Enhanced issue context fetching (comments, change history, labels, components, time tracking)
+- Rate limiting with exponential backoff and Retry-After header support for Jira API calls
+- JSON/YAML/table output formats
 - Credential validation
+- Shell completion generation (bash/zsh/fish/powershell)
 
 ## Requirements
 
