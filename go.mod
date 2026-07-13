@@ -2,7 +2,7 @@ module github.com/sebrandon1/jiracrawler
 
 go 1.26
 
-toolchain go1.26.4
+toolchain go1.26.5
 
 require (
 	github.com/andygrunwald/go-jira v1.17.0
