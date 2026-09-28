@@ -2,8 +2,6 @@ module github.com/sebrandon1/jiracrawler
 
 go 1.27.1
 
-toolchain go1.27.1
-
 require (
 	github.com/andygrunwald/go-jira v1.17.0
 	github.com/spf13/cobra v1.10.2
