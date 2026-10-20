@@ -104,7 +104,7 @@ Environment variables can also be used with prefix `JIRACRAWLER_` (e.g., `JIRACR
 
 ## Requirements
 
-- Go 1.26+
+- Go 1.27+
 - Jira personal access token (PAT)
 
 ## Code Style
