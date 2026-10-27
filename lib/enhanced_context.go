@@ -339,4 +339,3 @@ func FetchIssueWithEnhancedContext(client *jira.Client, baseURL, issueKey, apike
 
 	return &result, nil
 }
-

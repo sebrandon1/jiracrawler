@@ -1,14 +1,13 @@
 package lib
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"text/tabwriter"
 	"time"
 
 	jira "github.com/andygrunwald/go-jira"
-	"gopkg.in/yaml.v3"
+	"github.com/sebrandon1/go-toolbox/cliout"
+	"github.com/sebrandon1/go-toolbox/yamlx"
 )
 
 // JiraConfig holds the Jira instance URL and user email
@@ -337,18 +336,13 @@ func FetchUserIssuesInDateRange(jiraURL, jiraUser, apikey string, assignee strin
 }
 
 func PrintJSON(data interface{}) error {
-	b, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return fmt.Errorf("marshaling JSON: %w", err)
-	}
-	fmt.Println(string(b))
-	return nil
+	return cliout.PrintJSON(os.Stdout, data)
 }
 
 func PrintYAML(data interface{}) error {
-	b, err := yaml.Marshal(data)
+	b, err := yamlx.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("marshaling YAML: %w", err)
+		return err
 	}
 	fmt.Println(string(b))
 	return nil
@@ -357,46 +351,46 @@ func PrintYAML(data interface{}) error {
 // PrintTable prints issues in a human-readable table format using tabwriter.
 // Accepts []AssignedIssuesResult, *UserUpdatesResult, or *QueryResult.
 func PrintTable(data interface{}) error {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "KEY\tSTATUS\tPRIORITY\tSUMMARY")
+	headers := []string{"KEY", "STATUS", "PRIORITY", "SUMMARY"}
+	var rows [][]string
 
 	switch v := data.(type) {
 	case []AssignedIssuesResult:
 		for _, r := range v {
 			for _, issue := range r.Issues {
-				printIssueRow(w, issue)
+				rows = append(rows, issueRow(issue))
 			}
 		}
 	case *QueryResult:
 		if v != nil {
 			for _, issue := range v.Issues {
-				printIssueRow(w, issue)
+				rows = append(rows, issueRow(issue))
 			}
 		}
 	case *UserUpdatesResult:
 		if v != nil {
 			for _, issue := range v.Issues {
-				printIssueRow(w, issue)
+				rows = append(rows, issueRow(issue))
 			}
 		}
 	default:
 		return fmt.Errorf("unsupported data type for table output: %T", data)
 	}
 
-	return w.Flush()
+	return cliout.PrintTable(os.Stdout, headers, rows)
 }
 
-func printIssueRow(w *tabwriter.Writer, issue Issue) {
+func issueRow(issue Issue) []string {
 	summary := issue.Summary
 	if len(summary) > 60 {
 		summary = summary[:57] + "..."
 	}
-	fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+	return []string{
 		issue.Key,
 		issue.Status.Name,
 		issue.Priority.Name,
 		summary,
-	)
+	}
 }
 
 // FetchUserIssuesInDateRangeWithContext - Enhanced version of FetchUserIssuesInDateRange

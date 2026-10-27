@@ -4,10 +4,10 @@ go 1.27.3
 
 require (
 	github.com/andygrunwald/go-jira v1.17.0
+	github.com/sebrandon1/go-toolbox v0.1.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -29,4 +29,5 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
+
+	"github.com/sebrandon1/go-toolbox/httpx"
 )
 
 // RateLimiter manages API request rate limiting with retry logic
@@ -95,6 +96,11 @@ func (rl *RateLimiter) GetMaxRetries() int {
 
 // DoRequestWithRetry executes an HTTP request with automatic retry on rate limit errors (429)
 // It implements exponential backoff and respects the Retry-After header if present
+//
+// The loop is kept local rather than delegated to retry.Do: retry.Do retries
+// transport errors and only methods in its retry set, while this function must
+// retry 429 responses for any method and return transport errors immediately.
+// Retry-After parsing is delegated to httpx.ParseRetryAfter.
 func (rl *RateLimiter) DoRequestWithRetry(httpClient *http.Client, req *http.Request, verbose bool) (*http.Response, error) {
 	rl.mu.RLock()
 	maxRetries := rl.maxRetries
@@ -153,25 +159,7 @@ func (rl *RateLimiter) DoRequestWithRetry(httpClient *http.Client, req *http.Req
 // getRetryAfter parses the Retry-After header from an HTTP response
 // It supports both delay-seconds and HTTP-date formats
 func getRetryAfter(resp *http.Response) time.Duration {
-	retryAfter := resp.Header.Get("Retry-After")
-	if retryAfter == "" {
-		return 0
-	}
-
-	// Try parsing as seconds
-	if seconds, err := strconv.Atoi(retryAfter); err == nil {
-		return time.Duration(seconds) * time.Second
-	}
-
-	// Try parsing as HTTP date
-	if t, err := http.ParseTime(retryAfter); err == nil {
-		duration := time.Until(t)
-		if duration > 0 {
-			return duration
-		}
-	}
-
-	return 0
+	return httpx.ParseRetryAfter(resp.Header.Get("Retry-After"))
 }
 
 // Global rate limiter instance
