@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sebrandon1/go-toolbox/cobrautil"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -19,7 +20,7 @@ func Execute() error {
 	cobra.OnInitialize(initConfig)
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(getCmd)
-	return rootCmd.Execute()
+	return cobrautil.Execute(rootCmd)
 }
 
 func init() {
