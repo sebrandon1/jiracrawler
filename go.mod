@@ -6,7 +6,7 @@ toolchain go1.27.3
 
 require (
 	github.com/andygrunwald/go-jira v1.17.0
-	github.com/sebrandon1/go-toolbox v0.1.1
+	github.com/sebrandon1/go-toolbox v0.1.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
